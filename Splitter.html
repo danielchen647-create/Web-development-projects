@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Splitter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for layout specifics requested */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            /* Extra padding at bottom so content isn't hidden by the fixed footer */
+            padding-bottom: 100px;
+        }
+
+        /* Collapsible section transition mechanics */
+        .chevron {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        .step-container.open .chevron {
+            transform: rotate(90deg);
+        }
+        .step-content {
+            display: none;
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .step-container.open .step-content {
+            display: block;
+        }
+
+        /* Step 3 Custom Table scrollbar hiding for cleaner look */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Ensures the fixed sticky layout background overrides scrolling content */
+        .sticky-col {
+            background-color: #ffffff;
+            z-index: 10;
+        }
+
+        /* Footer dotted separation */
+        .footer-bar {
+            border-top: 3px dotted #9ca3af;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-3xl mx-auto">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-800 uppercase flex items-center justify-center gap-2">
+            <!-- Simple SVG icon matching the drawing's vibe -->
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Paper Splitter
+        </h1>
+        <p class="text-gray-500 text-sm mt-2">Design prototype</p>
+    </header>
+
+    <main class="space-y-4">
+        <section id="step1" class="step-container bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <button class="w-full text-left p-4 font-semibold text-lg flex items-center justify-between focus:outline-none" onclick="toggleStep('step1')">
+                <span>Step 1: Capture Receipt</span>
+                <span class="chevron text-gray-400 font-mono text-xl">&gt;</span>
+            </button>
+            <div class="step-content">
+                <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                    <p class="text-gray-600 mb-4 text-center">Take a photo of your receipt or upload a file.</p>
+                    <!--
+                        The 'capture="environment"' attribute is what tells mobile devices to open the rear camera.
+                        'accept="image/*"' restricts the file picker to images.
+                    -->
+                    <input type="file" id="receiptImage" accept="image/*" capture="environment"
+                           class="block w-full text-sm text-gray-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-full file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-blue-50 file:text-blue-700
+                                  hover:file:bg-blue-100 cursor-pointer"/>
+                </div>
+            </div>
+        </section>
+
+        <section id="step2" class="step-container bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <button class="w-full text-left p-4 font-semibold text-lg flex items-center justify-between focus:outline-none" onclick="toggleStep('step2')">
+                <span>Step 2: List People</span>
+                <span class="chevron text-gray-400 font-mono text-xl">&gt;</span>
+            </button>
+            <div class="step-content">
+                <div class="flex gap-2">
+                    <input type="text" id="newUserName" placeholder="e.g. Daniel Chen"
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           onkeypress="handleKeyPress(event)">
+                    <button onclick="addUser()"
+                            class="px-6 py-2 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors">
+                        Add
+                    </button>
+                </div>
+                <!-- Dynamic list of added users will appear here -->
+                <div id="addedUsersList" class="mt-4 flex flex-wrap gap-2"></div>
+            </div>
+        </section>
+
+        <section id="step3" class="step-container open bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <button class="w-full text-left p-4 font-semibold text-lg flex items-center justify-between focus:outline-none" onclick="toggleStep('step3')">
+                <span>Step 3: Select Items</span>
+                <span class="chevron text-gray-400 font-mono text-xl">&gt;</span>
+            </button>
+            <div class="step-content p-0"> <!-- Remove padding for full width table -->
+
+                <!--
+                    The custom table container.
+                    Uses relative positioning and horizontal scrolling.
+                -->
+                <div class="w-full overflow-x-auto relative hide-scrollbar">
+                    <div id="customTable" class="min-w-max flex flex-col w-full text-sm">
+                        <!-- Table will be injected here via JavaScript -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer-bar fixed bottom-0 left-0 w-full bg-white px-4 py-4 md:px-8 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] flex items-center justify-between">
+        <div class="flex flex-col">
+            <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Total</span>
+            <span class="text-2xl font-bold text-gray-900" id="runningTotal">$0.00</span>
+        </div>
+        <button class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 shadow-md transition-transform active:scale-95">
+            Split!
+        </button>
+    </footer>
+
+    <script>
+        // State management
+        let users = [];
+        // Dummy data for the prototype
+        const dummyItems = [
+            { id: 1, description: "Deluxe Cheeseburger", price: 16.50 },
+            { id: 2, description: "Truffle Fries", price: 8.00 },
+            { id: 3, description: "Craft Cola", price: 4.50 }
+        ];
+
+        // Toggle the collapsible sections
+        function toggleStep(stepId) {
+            const step = document.getElementById(stepId);
+            step.classList.toggle('open');
+        }
+
+        // Helper to extract first two initials from a name
+        function getInitials(name) {
+            const words = name.trim().split(/\s+/);
+            if (words.length === 1) {
+                return name.substring(0, 2).toUpperCase();
+            }
+            return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+        }
+
+        // Handle enter key in input field
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addUser();
+            }
+        }
+
+        // Add user logic
+        function addUser() {
+            const input = document.getElementById('newUserName');
+            const name = input.value.trim();
+
+            if (name === '') return;
+
+            // Generate a unique ID and initials
+            const newUser = {
+                id: 'user_' + Date.now(),
+                name: name,
+                initials: getInitials(name)
+            };
+
+            users.push(newUser);
+            input.value = ''; // Clear input
+
+            updateUserBadges();
+            renderCustomTable();
+        }
+
+        // Display small badges in Step 2 to show who was added
+        function updateUserBadges() {
+            const container = document.getElementById('addedUsersList');
+            container.innerHTML = users.map(user =>
+                `<div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center gap-1 border border-gray-200">
+                    ${user.name}
+                </div>`
+            ).join('');
+        }
+
+        // Render the complex custom flexbox table for Step 3
+        function renderCustomTable() {
+            const tableContainer = document.getElementById('customTable');
+
+            // 1. Build Header Row
+            let headerHTML = `
+                <div class="flex border-b border-gray-200 bg-gray-50">
+                    <!-- Fixed Left Columns -->
+                    <div class="sticky-col left-0 w-40 md:w-48 p-3 font-semibold text-gray-600 border-r border-gray-100 shrink-0">Item</div>
+                    <div class="sticky-col left-[160px] md:left-[192px] w-20 md:w-24 p-3 font-semibold text-gray-600 text-right border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] shrink-0">Price</div>
+
+                    <!-- Scrollable User Columns Container -->
+                    <div class="flex">
+            `;
+
+            if (users.length === 0) {
+                headerHTML += `<div class="p-3 text-gray-400 italic text-xs whitespace-nowrap flex items-center">Add users in Step 2</div>`;
+            } else {
+                users.forEach(user => {
+                    headerHTML += `
+                        <div class="w-16 shrink-0 flex justify-center items-center py-2 border-r border-gray-100">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm" title="${user.name}">
+                                ${user.initials}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            headerHTML += `</div></div>`; // Close user columns & header row
+
+
+            // 2. Build Item Rows
+            let rowsHTML = '';
+            let totalAmount = 0;
+
+            dummyItems.forEach(item => {
+                totalAmount += item.price;
+                rowsHTML += `
+                    <div class="flex border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <!-- Fixed Left Columns -->
+                        <div class="sticky-col left-0 w-40 md:w-48 p-3 text-gray-800 border-r border-gray-100 shrink-0 truncate" title="${item.description}">
+                            ${item.description}
+                        </div>
+                        <div class="sticky-col left-[160px] md:left-[192px] w-20 md:w-24 p-3 text-gray-800 text-right border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] shrink-0 font-medium">
+                            $${item.price.toFixed(2)}
+                        </div>
+
+                        <!-- Scrollable Checkbox Columns -->
+                        <div class="flex">
+                `;
+
+                users.forEach(user => {
+                    rowsHTML += `
+                        <div class="w-16 shrink-0 flex justify-center items-center py-3 border-r border-gray-100">
+                            <input type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
+                        </div>
+                    `;
+                });
+
+                rowsHTML += `</div></div>`;
+            });
+
+            // Inject into DOM
+            tableContainer.innerHTML = headerHTML + rowsHTML;
+
+            // Update footer total
+            document.getElementById('runningTotal').innerText = `$${totalAmount.toFixed(2)}`;
+        }
+
+        // Initialize table on load
+        window.onload = function() {
+            renderCustomTable();
+        };
+
+    </script>
+</body>
+</html>

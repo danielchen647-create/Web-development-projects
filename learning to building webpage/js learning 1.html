@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1> This is my first JS Script</h1>
+
+
+<button type="button"
+onclick="document.getElementById('Potato paragraph').innerHTML= 'Hello world'"
+mouseup="document.getElementById('Potato paragraph').innerHTML= 'bye world'">
+try me
+</button>
+<p id="Potato paragraph">Nothing to see here...</p>
+<hr>
+
+<!--- This seciton is going to be dedicated to learning how to create the web app-->
+<button id="button" onclick="pullingData()">
+    Pull from api!
+</button>
+<script>
+async function pullingData(){
+    const respoinse = await fetch("http://127.0.0.1:8000/api/test-connection");
+    const data = await response.json();
+    document.getElementById("response-text").innerText = data.message;
+}
+</script>
+<p id="display-text1">Watch me and see</p>
+
+</body>
+
+</html>
